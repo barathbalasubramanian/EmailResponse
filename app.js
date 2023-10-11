@@ -69,7 +69,7 @@ app.post('/response', (req, res) => {
 
     if (responseStore[token]) {
         res.send('Your response has already been taken.');
-        console.log(`Response received for token ${email}: ${answer}`);
+        console.log(`Response Already Taken ${email}`);
         return;
     }
     
