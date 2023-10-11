@@ -8,6 +8,8 @@ const crypto = require('crypto');
 let responseStore = {};
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+app.set('views', './views');
 
 function generateToken(email) {
   return crypto.createHash('sha256').update(email).digest('hex');
@@ -21,9 +23,12 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+app.get("/" , (req,res) => {
+    res.render("index")
+})
 
-app.get('/', async (req, res) => {
-    const recipientEmail = 'barathkumar.b2411@gmail.com'; 
+app.post('/', async (req, res) => {
+    const recipientEmail = req.body['email'];
     const token = generateToken(recipientEmail);
     const mailOptions = {
         from: 'HACKER@gmail.com',
@@ -33,11 +38,13 @@ app.get('/', async (req, res) => {
             <p>Do you accept?</p>
             <form action="http://localhost:${PORT}/response" method="post">
                 <input type="hidden" name="token" value="${token}">
+                <input type="hidden" name="email" value="${recipientEmail}">
                 <input type="hidden" name="answer" value="accept">
                 <button type="submit">Accept</button>
             </form>
             <form action="http://localhost:${PORT}/response" method="post">
                 <input type="hidden" name="token" value="${token}">
+                <input type="hidden" name="email" value="${recipientEmail}">
                 <input type="hidden" name="answer" value="reject">
                 <button type="submit">Reject</button>
             </form>
@@ -46,7 +53,9 @@ app.get('/', async (req, res) => {
 
     try {
         await transporter.sendMail(mailOptions);
-        res.send('Email sent');
+        console.log("Email Send")
+        res.send("Email send")
+        return;
     } catch (error) {
         res.send('Error sending email: ' + error.message);
     }
@@ -55,15 +64,18 @@ app.get('/', async (req, res) => {
 app.post('/response', (req, res) => {
     const token = req.body.token;
     const answer = req.body.answer;
-  
+    const email = req.body.email;
+
     if (responseStore[token]) {
-      res.send('Your response has already been taken.');
-      return;
+        res.send('Your response has already been taken.');
+        console.log(`Response received for token ${email}: ${answer}`);
+        return;
     }
-  
+    
     responseStore[token] = answer;
-    console.log(`Response received for token ${token}: ${answer}`);
+    console.log(`Response received for token ${email}: ${answer}`);
     res.send(`Thank you for your response: ${answer}`);
+    return;
 });
 
 // app.get('/response', (req, res) => {
